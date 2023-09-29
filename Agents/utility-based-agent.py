@@ -1,9 +1,3 @@
-#An autonomous vehicle is a good example of a goal based agent
-#This code shows how a vehicle agent calculates all the utilities to make a fair decision among all
-#decision he have
-#You can change the code accordingly
-
-
 import random
 
 class AutonomousVehicle:
