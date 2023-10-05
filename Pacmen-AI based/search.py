@@ -175,9 +175,35 @@ def uniformCostSearchStats(problem):
     util.raiseNotDefined()
 
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    return uniformCostSearchStats(problem)[0]
+    priority_queue = util.PriorityQueue()
+    start_state = problem.getStartState()
+    priority_queue.push((start_state, []), 0)
+
+    # Initialize a set to keep track of visited nodes
+    visited = set()
+
+    while not priority_queue.isEmpty():
+        # Pop the node with the lowest path cost from the priority queue
+        node, path = priority_queue.pop()
+
+        # Check if the current node is the goal state
+        if problem.isGoalState(node):
+            return path
+
+        # Mark the current node as visited
+        visited.add(node)
+
+        # Get successors and their costs
+        successors = problem.getSuccessors(node)
+        for successor, action, step_cost in successors:
+            if successor not in visited:
+                # Calculate the total cost of the path to the successor
+                total_cost = problem.getCostOfActions(path + [action])
+                # Push the successor and its path with the total cost to the priority queue
+                priority_queue.push((successor, path + [action]), total_cost)
+
+    # If the goal state is not found, return an empty list
+    return []
 
 
 def nullHeuristic(state, problem=None):
@@ -191,10 +217,41 @@ def aStarSearchStats(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
-
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """ Do not change this function"""
-    return aStarSearchStats(problem, heuristic)[0]
+    # Initialize a priority queue with the start state and a cost of 0
+    priority_queue = util.PriorityQueue()
+    start_state = problem.getStartState()
+    priority_queue.push((start_state, [], 0), 0)
+
+    # Initialize a set to keep track of visited nodes
+    visited = set()
+
+    while not priority_queue.isEmpty():
+        # Pop the node with the lowest estimated total cost from the priority queue
+        node, path, cost = priority_queue.pop()
+
+        # Check if the current node is the goal state
+        if problem.isGoalState(node):
+            return path
+
+        # Mark the current node as visited
+        visited.add(node)
+
+        # Get successors and their costs
+        successors = problem.getSuccessors(node)
+        for successor, action, step_cost in successors:
+            if successor not in visited:
+                # Calculate the total cost of the path to the successor
+                total_cost = cost + step_cost
+                # Calculate the heuristic estimate for the successor
+                heuristic_cost = heuristic(successor, problem)
+                # Calculate the estimated total cost for the successor
+                estimated_total_cost = total_cost + heuristic_cost
+                # Push the successor and its path with the estimated total cost to the priority queue
+                priority_queue.push((successor, path + [action], total_cost), estimated_total_cost)
+
+    # If the goal state is not found, return an empty list
+    return []
 
 # Abbreviations
 bfs = breadthFirstSearch
