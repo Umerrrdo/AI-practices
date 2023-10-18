@@ -155,27 +155,136 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     Your minimax agent with alpha-beta pruning (question 3)
     """
 
-    def getAction(self, game_state):
+    def getAction(self, gameState):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        infinity = float('inf')  # Set Infinity to represent positive infinity.
+
+        def minValue(state, agentInd, depth, a, b):
+            # Minimize agent's evaluation function.
+            legalActions = state.getLegalActions(agentInd)
+            if not legalActions:
+                return self.evaluationFunction(state)  # If no legal actions, return evaluation.
+
+            v = infinity  # Initialize v to positive infinity.
+            for action in legalActions:
+                newState = state.generateSuccessor(agentInd, action)
+
+                # If the last ghost, call maxValue; otherwise, continue with minValue.
+                if agentInd == state.getNumAgents() - 1:
+                    newValue = maxValue(newState, depth, a, b)
+                else:
+                    newValue = minValue(newState, agentInd + 1, depth, a, b)
+
+                v = min(v, newValue)  # Update v to the minimum of v and newV.
+                if v < a:
+                    return v  # Alpha-beta pruning: if v < a, return v.
+                b = min(b, v)  # Update b to the minimum of b and v.
+            return v
+
+        def maxValue(state, depth, a, b):
+            # Maximize agent's evaluation function (Pac-Man).
+            legalActions = state.getLegalActions(0)
+            if not legalActions or depth == self.depth:
+                return self.evaluationFunction(state)  # If no actions or max depth, return evaluation.
+
+            v = -infinity  # Initialize v to negative infinity.
+
+            # For enabling second-play pruning
+            if depth == 0:
+                bestAction = legalActions[0]  # Initialize bestAction if depth is 0.
+
+            for action in legalActions:
+                newState = state.generateSuccessor(0, action)
+                newValue = minValue(newState, 0 + 1, depth + 1, a, b)
+
+                if newValue > v:
+                    v = newValue  # Update v to the new maximum value.
+                    if depth == 0:
+                        bestAction = action  # Update bestAction if depth is 0.
+
+                if v > b:
+                    return v  # Alpha-beta pruning: if v > b, return v.
+                a = max(a, v)  # Update a to the maximum of a and v.
+
+            if depth == 0:
+                return bestAction  # Return the best action if depth is 0.
+            return v  # Return the maximum value.
+
+        bestAction = maxValue(gameState, 0, -infinity, infinity)  # Start the search with initial values.
+        return bestAction
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
 
-    def getAction(self, game_state):
+    def getAction(self, gameState):
         """
-        Returns the expectimax action using self.depth and self.evaluationFunction
+          Returns the expectimax action using self.depth and self.evaluationFunction
 
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
+          All ghosts should be modeled as choosing uniformly at random from their
+          legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        numberOfGhosts = gameState.getNumAgents() - 1
+
+        #Used only for pacman agent hence agentindex is always 0.
+        def maxLevel(gameState,depth):
+            #current depth is 1 as we are starting from the root.
+            currDepth = depth + 1
+            #terminal test
+            if gameState.isWin() or gameState.isLose() or currDepth==self.depth:   #Terminal Test
+                return self.evaluationFunction(gameState)
+            #set the max value to infinity.
+            maxvalue = -999999
+            #get the legal actions for pacman.
+            actions = gameState.getLegalActions(0)
+            #for each action of pacman, calculate the max of the successors.
+            for action in actions:
+                successor= gameState.generateSuccessor(0,action)
+                #calculate max of the successors.
+                maxvalue = max (maxvalue,chancenodes(successor,currDepth,1))
+            return maxvalue
+        #For all ghosts.
+        #agentIndex indicates that the ghost is at that index.
+        def chancenodes(gameState,depth,agentIndex):
+            if gameState.isWin() or gameState.isLose():   #Terminal Test
+                return self.evaluationFunction(gameState)
+            actions = gameState.getLegalActions(agentIndex)
+            #initialize the variable sum to 0.
+            sum = 0
+            #For each action of the ghost, calculate the sum of the successors.
+            for action in actions:
+                successor= gameState.generateSuccessor(agentIndex,action)
+                #If the ghost is the last ghost, then the next level is a max level.
+                if agentIndex == (gameState.getNumAgents() - 1):
+                    #Calculate the sum of the successors.
+                    sum += maxLevel(successor,depth)
+                else:
+                    #Calculate the sum of the successors.
+                    sum += chancenodes(successor,depth,agentIndex+1)
+            #Return the average of the sum of the successors.
+            return sum/len(actions)
+
+        #Root level action.
+        actions = gameState.getLegalActions(0)
+        currentScore = -999999
+        returnAction = ''
+        for action in actions:
+            nextState = gameState.generateSuccessor(0,action)
+            # Next level is a chance node level. Hence calling chance for successors of the root.
+            score = chancenodes(nextState,0,1)
+            # Choosing the action which is Maximum of the successors.
+            if score > currentScore:
+                returnAction = action
+                currentScore = score
+        return returnAction
+
 
 def betterEvaluationFunction(currentgame_state):
     """
